@@ -94,16 +94,19 @@ func (c *searchCriteria) ctDomainOrClientCase(entry *logEntry) bool {
 	if c.strict && qhost == searchVal {
 		return true
 	}
+
 	if !c.strict && strings.Contains(qhost, searchVal) {
 		return true
 	}
 
-	if c.strict && entry.IP == c.value {
+	if c.strict && entry.IP.String() == c.value {
 		return true
 	}
-	if !c.strict && strings.Contains(entry.IP, c.value) {
+
+	if !c.strict && strings.Contains(entry.IP.String(), c.value) {
 		return true
 	}
+
 	return false
 }
 
