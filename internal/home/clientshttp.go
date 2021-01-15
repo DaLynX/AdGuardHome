@@ -3,6 +3,7 @@ package home
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 )
 
@@ -229,8 +230,8 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 	q := r.URL.Query()
 	data := []map[string]interface{}{}
 	for i := 0; ; i++ {
-		ip := q.Get(fmt.Sprintf("ip%d", i))
-		if len(ip) == 0 {
+		ip := net.ParseIP(q.Get(fmt.Sprintf("ip%d", i)))
+		if ip == nil {
 			break
 		}
 		el := map[string]interface{}{}
@@ -240,15 +241,15 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 			if !ok {
 				continue // a client with this IP isn't found
 			}
-			cj := clientHostToJSON(ip, ch)
+			cj := clientHostToJSON(ip.String(), ch)
 
 			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
-			el[ip] = cj
+			el[ip.String()] = cj
 		} else {
 			cj := clientToJSON(&c)
 
 			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
-			el[ip] = cj
+			el[ip.String()] = cj
 		}
 
 		data = append(data, el)

@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Server) beforeRequestHandler(_ *proxy.Proxy, d *proxy.DNSContext) (bool, error) {
-	ip := IPStringFromAddr(d.Addr)
+	ip := IPFromAddr(d.Addr)
 	disallowed, _ := s.access.IsBlockedIP(ip)
 	if disallowed {
 		log.Tracef("Client IP %s is blocked by settings", ip)

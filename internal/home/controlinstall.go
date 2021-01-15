@@ -31,7 +31,7 @@ type netInterfaceJSON struct {
 	Name         string   `json:"name"`
 	MTU          int      `json:"mtu"`
 	HardwareAddr string   `json:"hardware_address"`
-	Addresses    []string `json:"ip_addresses"`
+	Addresses    []net.IP `json:"ip_addresses"`
 	Flags        string   `json:"flags"`
 }
 
@@ -69,7 +69,7 @@ func (web *Web) handleInstallGetAddresses(w http.ResponseWriter, r *http.Request
 
 type checkConfigReqEnt struct {
 	Port    int    `json:"port"`
-	IP      string `json:"ip"`
+	IP      net.IP `json:"ip"`
 	Autofix bool   `json:"autofix"`
 }
 
@@ -85,9 +85,9 @@ type checkConfigRespEnt struct {
 }
 
 type staticIPJSON struct {
-	Static string `json:"static"`
-	IP     string `json:"ip"`
-	Error  string `json:"error"`
+	Static string    `json:"static"`
+	IP     net.IPNet `json:"ip"`
+	Error  string    `json:"error"`
 }
 
 type checkConfigResp struct {
@@ -107,14 +107,14 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 	}
 
 	if reqData.Web.Port != 0 && reqData.Web.Port != config.BindPort && reqData.Web.Port != config.BetaBindPort {
-		err = util.CheckPortAvailable(reqData.Web.IP, reqData.Web.Port)
+		err = util.CheckPortAvailable(reqData.Web.IP.String(), reqData.Web.Port)
 		if err != nil {
 			respData.Web.Status = fmt.Sprintf("%v", err)
 		}
 	}
 
 	if reqData.DNS.Port != 0 {
-		err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+		err = util.CheckPacketPortAvailable(reqData.DNS.IP.String(), reqData.DNS.Port)
 
 		if util.ErrorIsAddrInUse(err) {
 			canAutofix := checkDNSStubListener()
@@ -125,7 +125,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 					log.Error("Couldn't disable DNSStubListener: %s", err)
 				}
 
-				err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+				err = util.CheckPacketPortAvailable(reqData.DNS.IP.String(), reqData.DNS.Port)
 				canAutofix = false
 			}
 
@@ -133,12 +133,12 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 		}
 
 		if err == nil {
-			err = util.CheckPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
+			err = util.CheckPortAvailable(reqData.DNS.IP.String(), reqData.DNS.Port)
 		}
 
 		if err != nil {
 			respData.DNS.Status = fmt.Sprintf("%v", err)
-		} else if reqData.DNS.IP != "0.0.0.0" {
+		} else if !reqData.DNS.IP.Equal(net.IP{0, 0, 0, 0}) {
 			respData.StaticIP = handleStaticIP(reqData.DNS.IP, reqData.SetStaticIP)
 		}
 	}
@@ -154,7 +154,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 // handleStaticIP - handles static IP request
 // It either checks if we have a static IP
 // Or if set=true, it tries to set it
-func handleStaticIP(ip string, set bool) staticIPJSON {
+func handleStaticIP(ip net.IP, set bool) staticIPJSON {
 	resp := staticIPJSON{}
 
 	interfaceName := util.GetInterfaceByIP(ip)
@@ -262,7 +262,7 @@ func disableDNSStubListener() error {
 }
 
 type applyConfigReqEnt struct {
-	IP   string `json:"ip"`
+	IP   net.IP `json:"ip"`
 	Port int    `json:"port"`
 }
 
@@ -297,29 +297,29 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	restartHTTP := true
-	if config.BindHost == newSettings.Web.IP && config.BindPort == newSettings.Web.Port {
+	if config.BindHost.Equal(newSettings.Web.IP) && config.BindPort == newSettings.Web.Port {
 		// no need to rebind
 		restartHTTP = false
 	}
 
 	// validate that hosts and ports are bindable
 	if restartHTTP {
-		err = util.CheckPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
+		err = util.CheckPortAvailable(newSettings.Web.IP.String(), newSettings.Web.Port)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s",
-				net.JoinHostPort(newSettings.Web.IP, strconv.Itoa(newSettings.Web.Port)), err)
+				net.JoinHostPort(newSettings.Web.IP.String(), strconv.Itoa(newSettings.Web.Port)), err)
 			return
 		}
 
 	}
 
-	err = util.CheckPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = util.CheckPacketPortAvailable(newSettings.DNS.IP.String(), newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
-	err = util.CheckPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
+	err = util.CheckPortAvailable(newSettings.DNS.IP.String(), newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
@@ -392,7 +392,7 @@ func (web *Web) registerInstallHandlers() {
 // functionality will appear in default checkConfigReqEnt.
 type checkConfigReqEntBeta struct {
 	Port    int      `json:"port"`
-	IP      []string `json:"ip"`
+	IP      []net.IP `json:"ip"`
 	Autofix bool     `json:"autofix"`
 }
 
@@ -459,7 +459,7 @@ func (web *Web) handleInstallCheckConfigBeta(w http.ResponseWriter, r *http.Requ
 // TODO(e.burkov): this should removed with the API v1 when the appropriate
 // functionality will appear in default applyConfigReqEnt.
 type applyConfigReqEntBeta struct {
-	IP   []string `json:"ip"`
+	IP   []net.IP `json:"ip"`
 	Port int      `json:"port"`
 }
 

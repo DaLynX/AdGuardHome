@@ -206,7 +206,7 @@ func setupConfig(args options) {
 	}
 
 	// override bind host/port from the console
-	if args.bindHost != "" {
+	if args.bindHost != nil {
 		config.BindHost = args.bindHost
 	}
 	if args.bindPort != 0 {
@@ -581,30 +581,30 @@ func printHTTPAddresses(proto string) {
 		} else {
 			log.Printf("Go to https://%s:%s", tlsConf.ServerName, port)
 		}
-	} else if config.BindHost == "0.0.0.0" {
+	} else if config.BindHost.Equal(net.IP{0, 0, 0, 0}) {
 		log.Println("AdGuard Home is available on the following addresses:")
 		ifaces, err := util.GetValidNetInterfacesForWeb()
 		if err != nil {
 			// That's weird, but we'll ignore it
-			log.Printf("Go to %s://%s", proto, net.JoinHostPort(config.BindHost, port))
+			log.Printf("Go to %s://%s", proto, net.JoinHostPort(config.BindHost.String(), port))
 			if config.BetaBindPort != 0 {
-				log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(config.BindHost, strconv.Itoa(config.BetaBindPort)))
+				log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(config.BindHost.String(), strconv.Itoa(config.BetaBindPort)))
 			}
 			return
 		}
 
 		for _, iface := range ifaces {
 			for _, addr := range iface.Addresses {
-				log.Printf("Go to %s://%s", proto, net.JoinHostPort(addr, strconv.Itoa(config.BindPort)))
+				log.Printf("Go to %s://%s", proto, net.JoinHostPort(addr.String(), strconv.Itoa(config.BindPort)))
 				if config.BetaBindPort != 0 {
-					log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(addr, strconv.Itoa(config.BetaBindPort)))
+					log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(addr.String(), strconv.Itoa(config.BetaBindPort)))
 				}
 			}
 		}
 	} else {
-		log.Printf("Go to %s://%s", proto, net.JoinHostPort(config.BindHost, port))
+		log.Printf("Go to %s://%s", proto, net.JoinHostPort(config.BindHost.String(), port))
 		if config.BetaBindPort != 0 {
-			log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(config.BindHost, strconv.Itoa(config.BetaBindPort)))
+			log.Printf("Go to %s://%s (BETA)", proto, net.JoinHostPort(config.BindHost.String(), strconv.Itoa(config.BetaBindPort)))
 		}
 	}
 }

@@ -36,6 +36,7 @@ type RequestFilteringSettings struct {
 	ParentalEnabled     bool
 
 	ClientName string
+	// TODO(e.burkov): wait for urlfilter update to replace with net.IP.
 	ClientIP   string
 	ClientTags []string
 
