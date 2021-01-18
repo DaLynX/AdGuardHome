@@ -234,24 +234,22 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 		if ip == nil {
 			break
 		}
+
 		el := map[string]interface{}{}
 		c, ok := clients.Find(ip)
+		var cj clientJSON
 		if !ok {
-			ch, ok := clients.FindAutoClient(ip)
-			if !ok {
-				continue // a client with this IP isn't found
+			var found bool
+			cj, found = clients.findTemporary(ip)
+			if !found {
+				continue
 			}
-			cj := clientHostToJSON(ip.String(), ch)
-
-			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
-			el[ip.String()] = cj
 		} else {
-			cj := clientToJSON(&c)
-
+			cj = clientToJSON(&c)
 			cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
-			el[ip.String()] = cj
 		}
 
+		el[ip.String()] = cj
 		data = append(data, el)
 	}
 
@@ -266,6 +264,36 @@ func (clients *clientsContainer) handleFindClient(w http.ResponseWriter, r *http
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, "Couldn't write response: %s", err)
 	}
+}
+
+// findTemporary looks up the IP in temporary storages, like autohosts or
+// blocklists.
+func (clients *clientsContainer) findTemporary(ip net.IP) (cj clientJSON, found bool) {
+	ch, ok := clients.FindAutoClient(ip)
+	if !ok {
+		// It is still possible that the IP used to be in the runtime
+		// clients list, but then the server was reloaded.  So, check
+		// the DNS server's blocked IP list.
+		//
+		// See https://github.com/AdguardTeam/AdGuardHome/issues/2428.
+		disallowed, rule := clients.dnsServer.IsBlockedIP(ip)
+		if rule == "" {
+			return clientJSON{}, false
+		}
+
+		cj = clientJSON{
+			IDs:            []string{ip.String()},
+			Disallowed:     disallowed,
+			DisallowedRule: rule,
+		}
+
+		return cj, true
+	}
+
+	cj = clientHostToJSON(ip.String(), ch)
+	cj.Disallowed, cj.DisallowedRule = clients.dnsServer.IsBlockedIP(ip)
+
+	return cj, true
 }
 
 // RegisterClientsHandlers registers HTTP handlers
