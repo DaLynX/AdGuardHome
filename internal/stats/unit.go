@@ -655,7 +655,7 @@ func (s *statsCtx) getData() map[string]interface{} {
 	return d
 }
 
-func (s *statsCtx) GetTopClientsIP(maxCount uint) []string {
+func (s *statsCtx) GetTopClientsIP(maxCount uint) []net.IP {
 	units, _ := s.loadUnits(s.conf.limit)
 	if units == nil {
 		return nil
@@ -669,9 +669,9 @@ func (s *statsCtx) GetTopClientsIP(maxCount uint) []string {
 		}
 	}
 	a := convertMapToArray(m, int(maxCount))
-	d := []string{}
+	d := []net.IP{}
 	for _, it := range a {
-		d = append(d, it.Name)
+		d = append(d, net.ParseIP(it.Name))
 	}
 	return d
 }

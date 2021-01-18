@@ -150,9 +150,9 @@ func answerToMap(a *dns.Msg) (answers []jobject) {
 		// try most common record types
 		switch v := k.(type) {
 		case *dns.A:
-			answer["value"] = v.A.String()
+			answer["value"] = v.A
 		case *dns.AAAA:
-			answer["value"] = v.AAAA.String()
+			answer["value"] = v.AAAA
 		case *dns.MX:
 			answer["value"] = fmt.Sprintf("%v %v", v.Preference, v.Mx)
 		case *dns.CNAME:

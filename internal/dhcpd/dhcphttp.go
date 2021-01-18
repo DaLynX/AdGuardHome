@@ -27,7 +27,8 @@ func convertLeases(inputLeases []Lease, includeExpires bool) []map[string]string
 	leases := []map[string]string{}
 	for _, l := range inputLeases {
 		lease := map[string]string{
-			"mac":      l.HWAddr.String(),
+			"mac": l.HWAddr.String(),
+			// TODO(e.burkov): remove conversion while #2509.
 			"ip":       l.IP.String(),
 			"hostname": l.Hostname,
 		}
@@ -70,7 +71,7 @@ func v4JSONToServerConf(j v4ServerConfJSON) V4ServerConf {
 }
 
 type v6ServerConfJSON struct {
-	RangeStart    string `json:"range_start"`
+	RangeStart    net.IP `json:"range_start"`
 	LeaseDuration uint32 `json:"lease_duration"`
 }
 

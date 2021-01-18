@@ -44,7 +44,7 @@ func InitRDNS(dnsServer *dnsforward.Server, clients *clientsContainer) *RDNS {
 // Begin - add IP address to rDNS queue
 func (r *RDNS) Begin(ip net.IP) {
 	now := uint64(time.Now().Unix())
-	expire := r.ipAddrs.Get([]byte(ip))
+	expire := r.ipAddrs.Get(ip)
 	if len(expire) != 0 {
 		exp := binary.BigEndian.Uint64(expire)
 		if exp > now {
@@ -55,7 +55,7 @@ func (r *RDNS) Begin(ip net.IP) {
 	expire = make([]byte, 8)
 	const ttl = 1 * 60 * 60
 	binary.BigEndian.PutUint64(expire, now+ttl)
-	_ = r.ipAddrs.Set([]byte(ip), expire)
+	_ = r.ipAddrs.Set(ip, expire)
 
 	if r.clients.Exists(ip, ClientSourceRDNS) {
 		return

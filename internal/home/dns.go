@@ -252,11 +252,11 @@ func getDNSAddresses() []string {
 
 		for _, iface := range ifaces {
 			for _, addr := range iface.Addresses {
-				addDNSAddress(&dnsAddresses, addr.String())
+				addDNSAddress(&dnsAddresses, addr)
 			}
 		}
 	} else {
-		addDNSAddress(&dnsAddresses, config.DNS.BindHost.String())
+		addDNSAddress(&dnsAddresses, config.DNS.BindHost)
 	}
 
 	dnsEncryption := getDNSEncryption()
@@ -326,14 +326,12 @@ func startDNSServer() error {
 	Context.queryLog.Start()
 
 	const topClientsNumber = 100 // the number of clients to get
-	topClients := Context.stats.GetTopClientsIP(topClientsNumber)
-	for _, ip := range topClients {
-		ipAddr := net.ParseIP(ip)
-		if !ipAddr.IsLoopback() {
-			Context.rdns.Begin(ipAddr)
+	for _, ip := range Context.stats.GetTopClientsIP(topClientsNumber) {
+		if !ip.IsLoopback() {
+			Context.rdns.Begin(ip)
 		}
-		if !Context.ipDetector.detectSpecialNetwork(ipAddr) {
-			Context.whois.Begin(ipAddr)
+		if !Context.ipDetector.detectSpecialNetwork(ip) {
+			Context.whois.Begin(ip)
 		}
 	}
 

@@ -107,14 +107,14 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 	}
 
 	if reqData.Web.Port != 0 && reqData.Web.Port != config.BindPort && reqData.Web.Port != config.BetaBindPort {
-		err = util.CheckPortAvailable(reqData.Web.IP.String(), reqData.Web.Port)
+		err = util.CheckPortAvailable(reqData.Web.IP, reqData.Web.Port)
 		if err != nil {
 			respData.Web.Status = fmt.Sprintf("%v", err)
 		}
 	}
 
 	if reqData.DNS.Port != 0 {
-		err = util.CheckPacketPortAvailable(reqData.DNS.IP.String(), reqData.DNS.Port)
+		err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 
 		if util.ErrorIsAddrInUse(err) {
 			canAutofix := checkDNSStubListener()
@@ -125,7 +125,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 					log.Error("Couldn't disable DNSStubListener: %s", err)
 				}
 
-				err = util.CheckPacketPortAvailable(reqData.DNS.IP.String(), reqData.DNS.Port)
+				err = util.CheckPacketPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 				canAutofix = false
 			}
 
@@ -133,7 +133,7 @@ func (web *Web) handleInstallCheckConfig(w http.ResponseWriter, r *http.Request)
 		}
 
 		if err == nil {
-			err = util.CheckPortAvailable(reqData.DNS.IP.String(), reqData.DNS.Port)
+			err = util.CheckPortAvailable(reqData.DNS.IP, reqData.DNS.Port)
 		}
 
 		if err != nil {
@@ -304,7 +304,7 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 
 	// validate that hosts and ports are bindable
 	if restartHTTP {
-		err = util.CheckPortAvailable(newSettings.Web.IP.String(), newSettings.Web.Port)
+		err = util.CheckPortAvailable(newSettings.Web.IP, newSettings.Web.Port)
 		if err != nil {
 			httpError(w, http.StatusBadRequest, "Impossible to listen on IP:port %s due to %s",
 				net.JoinHostPort(newSettings.Web.IP.String(), strconv.Itoa(newSettings.Web.Port)), err)
@@ -313,13 +313,13 @@ func (web *Web) handleInstallConfigure(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	err = util.CheckPacketPortAvailable(newSettings.DNS.IP.String(), newSettings.DNS.Port)
+	err = util.CheckPacketPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return
 	}
 
-	err = util.CheckPortAvailable(newSettings.DNS.IP.String(), newSettings.DNS.Port)
+	err = util.CheckPortAvailable(newSettings.DNS.IP, newSettings.DNS.Port)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, "%s", err)
 		return

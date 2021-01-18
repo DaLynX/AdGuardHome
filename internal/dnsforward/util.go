@@ -22,7 +22,7 @@ func IPFromAddr(addr net.Addr) (ip net.IP) {
 // IPStringFromAddr extracts IP address from net.Addr.
 // Note: we can't use net.SplitHostPort(a.String()) because of IPv6 zone:
 // https://github.com/AdguardTeam/AdGuardHome/internal/issues/1261
-func IPStringFromAddr(addr net.Addr) (ipstr string) {
+func IPStringFromAddr(addr net.Addr) (ipStr string) {
 	if ip := IPFromAddr(addr); ip != nil {
 		return ip.String()
 	}

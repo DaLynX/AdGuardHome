@@ -114,7 +114,7 @@ func WebCheckPortAvailable(port int) bool {
 		alreadyRunning = true
 	}
 	if !alreadyRunning {
-		err := util.CheckPortAvailable(config.BindHost.String(), port)
+		err := util.CheckPortAvailable(config.BindHost, port)
 		if err != nil {
 			return false
 		}

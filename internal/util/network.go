@@ -128,8 +128,8 @@ func GetSubnet(ifaceName string) net.IPNet {
 }
 
 // CheckPortAvailable - check if TCP port is available
-func CheckPortAvailable(host string, port int) error {
-	ln, err := net.Listen("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
+func CheckPortAvailable(host net.IP, port int) error {
+	ln, err := net.Listen("tcp", net.JoinHostPort(host.String(), strconv.Itoa(port)))
 	if err != nil {
 		return err
 	}
@@ -142,8 +142,8 @@ func CheckPortAvailable(host string, port int) error {
 }
 
 // CheckPacketPortAvailable - check if UDP port is available
-func CheckPacketPortAvailable(host string, port int) error {
-	ln, err := net.ListenPacket("udp", net.JoinHostPort(host, strconv.Itoa(port)))
+func CheckPacketPortAvailable(host net.IP, port int) error {
+	ln, err := net.ListenPacket("udp", net.JoinHostPort(host.String(), strconv.Itoa(port)))
 	if err != nil {
 		return err
 	}
